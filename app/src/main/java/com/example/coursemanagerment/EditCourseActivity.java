@@ -10,12 +10,15 @@ import android.widget.Button;
 import android.widget.ProgressBar;
 import android.widget.Toast;
 
+import com.example.coursemanagerment.DAO.CourseDAO;
 import com.google.android.material.textfield.TextInputEditText;
 import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.Query;
 import com.google.firebase.database.ValueEventListener;
 
 import java.util.HashMap;
@@ -28,16 +31,16 @@ public class EditCourseActivity extends AppCompatActivity {
     private ProgressBar loadingPB;
     private FirebaseDatabase firebaseDatabase;
     private DatabaseReference databaseReference;
-    private String courseID;
     private CourseRVModal courseRVModal;
-    private FirebaseAuth mAuth;
+    private FirebaseUser currentUser;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_edit_course);
         firebaseDatabase = FirebaseDatabase.getInstance();
-        mAuth = FirebaseAuth.getInstance();
+        currentUser = FirebaseAuth.getInstance().getCurrentUser();
 
         courseNameEdt = findViewById(R.id.idEdtCourseName);
         coursePriceEdt = findViewById(R.id.idEdtCoursePrice);
@@ -57,48 +60,81 @@ public class EditCourseActivity extends AppCompatActivity {
             courseImgEdt.setText(courseRVModal.getCourseImg());
             courseLinkEdt.setText(courseRVModal.getCourseLink());
             courseDescEdt.setText(courseRVModal.getCourseDescription());
-            courseID = courseRVModal.getCourseID();
         }
 
-        databaseReference = firebaseDatabase.getReference("Courses").child("userID");
 
+        databaseReference = firebaseDatabase.getReference("Courses");
         updateCourseBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 loadingPB.setVisibility(View.VISIBLE);
+//
                 String courseName = courseNameEdt.getText().toString();
-                String coursePrice = coursePriceEdt.getText().toString();
-                String suitedFor = courseSuitedForEdt.getText().toString();
+                String courseSlot = coursePriceEdt.getText().toString();
+                String semester = courseSuitedForEdt.getText().toString();
                 String courseImg = courseImgEdt.getText().toString();
                 String courseLink = courseLinkEdt.getText().toString();
                 String courseDesc = courseDescEdt.getText().toString();
 
-                Map<String, Object> map = new HashMap<>();
-                map.put("userID", mAuth.getUid());
-                map.put("courseName", courseName);
-                map.put("courseDescription", courseDesc);
-                map.put("coursePrice", coursePrice);
-                map.put("semester", suitedFor);
-                map.put("courseImg", courseImg);
-                map.put("courseLink", courseLink);
-                map.put("courseID", courseID);
+                courseRVModal.setCourseName(courseName);
+                courseRVModal.setCourseSlot(courseSlot);
+                courseRVModal.setSemester(semester);
+                courseRVModal.setCourseImg(courseImg);
+                courseRVModal.setCourseLink(courseLink);
+                courseRVModal.setCourseDescription(courseDesc);
 
-                databaseReference.addValueEventListener(new ValueEventListener() {
+//                Map<String, Object> map = new HashMap<>();
+//                map.put("userID", currentUser.getUid());
+//                map.put("courseName", courseName);
+//                map.put("courseDescription", courseDesc);
+//                map.put("coursePrice", coursePrice);
+//                map.put("semester", suitedFor);
+//                map.put("courseImg", courseImg);
+//                map.put("courseLink", courseLink);
+//                map.put("courseID", courseID);
+
+                CourseDAO.getInstance().update(courseRVModal);
+
+                databaseReference.addListenerForSingleValueEvent(new ValueEventListener() {
                     @Override
                     public void onDataChange(@NonNull DataSnapshot snapshot) {
-                        loadingPB.setVisibility(View.GONE);
-                        databaseReference.updateChildren(map);
-                        Toast.makeText(EditCourseActivity.this, "Course Updated...", Toast.LENGTH_SHORT).show();
-
-
                         startActivity(new Intent(EditCourseActivity.this, MainActivity.class));
+                        Toast.makeText(EditCourseActivity.this, "Course Updated...", Toast.LENGTH_SHORT).show();
                     }
 
                     @Override
                     public void onCancelled(@NonNull DatabaseError error) {
-                        Toast.makeText(EditCourseActivity.this, "Fail to update course...", Toast.LENGTH_SHORT).show();
+
                     }
                 });
+
+                //Query query = databaseReference.orderByChild("courseID").equalTo(courseID);
+
+//                query.addListenerForSingleValueEvent(new ValueEventListener() {
+//                    @Override
+//                    public void onDataChange(@NonNull DataSnapshot snapshot) {
+//                        loadingPB.setVisibility(View.GONE);
+//                        //databaseReference.child(courseID).updateChildren(map);
+//                        try {
+//                            databaseReference.updateChildren(map);
+//                            if (snapshot.hasChild(courseID)) {
+//                                Toast.makeText(EditCourseActivity.this, "Course Updated...", Toast.LENGTH_SHORT).show();
+//                            }else {
+//                                Toast.makeText(EditCourseActivity.this, "Course Updated fail...", Toast.LENGTH_SHORT).show();
+//                            }
+//                        }catch (Exception e){
+//                            Toast.makeText(EditCourseActivity.this, "Invalid data...", Toast.LENGTH_SHORT).show();
+//                        }
+//
+//                        startActivity(new Intent(EditCourseActivity.this, MainActivity.class));
+//                    }
+//
+//                    @Override
+//                    public void onCancelled(@NonNull DatabaseError error) {
+//                        Toast.makeText(EditCourseActivity.this, "Fail to update course...", Toast.LENGTH_SHORT).show();
+//
+//                    }
+//                });
             }
         });
 
@@ -112,7 +148,8 @@ public class EditCourseActivity extends AppCompatActivity {
     }
 
     private void deleteCourse() {
-        databaseReference.removeValue();
+//        databaseReference.child("userID").removeValue();
+        CourseDAO.getInstance().deleteByID(courseRVModal.getCourseID());
         Toast.makeText(this, "Course deleted..", Toast.LENGTH_SHORT).show();
         startActivity(new Intent(EditCourseActivity.this, MainActivity.class));
     }

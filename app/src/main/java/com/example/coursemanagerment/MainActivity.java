@@ -20,14 +20,18 @@ import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.example.coursemanagerment.DAO.CourseDAO;
 import com.google.android.material.bottomsheet.BottomSheetDialog;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.ChildEventListener;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.Query;
+import com.google.firebase.database.ValueEventListener;
 import com.squareup.picasso.Picasso;
 
 import java.util.ArrayList;
@@ -43,6 +47,7 @@ public class MainActivity extends AppCompatActivity implements CourseRVAdapter.C
     private RelativeLayout bottomSheetRL;
     private CourseRVAdapter courseRVAdapter;
     private FirebaseAuth mAuth;
+    private FirebaseUser currentUser;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -54,8 +59,10 @@ public class MainActivity extends AppCompatActivity implements CourseRVAdapter.C
         addFAB = findViewById(R.id.idAddFAB);
         bottomSheetRL = findViewById(R.id.LBSheet);
         firebaseDatabase = FirebaseDatabase.getInstance();
-
+        currentUser = FirebaseAuth.getInstance().getCurrentUser();
         databaseReference = firebaseDatabase.getReference("Courses");
+
+
         mAuth = FirebaseAuth.getInstance();
         courseRVModalArrayList = new ArrayList<>();
         courseRVAdapter = new CourseRVAdapter(courseRVModalArrayList, this, this);
@@ -69,42 +76,42 @@ public class MainActivity extends AppCompatActivity implements CourseRVAdapter.C
                 startActivity(new Intent(MainActivity.this, AddCourseActivity.class));
             }
         });
-        getAllCourses();
+        loadCourses();
     }
 
-    private void getAllCourses() {
+    private void loadCourses() {
         courseRVModalArrayList.clear();
-        databaseReference.addChildEventListener(new ChildEventListener() {
-            @Override
-            public void onChildAdded(@NonNull DataSnapshot snapshot, @Nullable String previousChildName) {
-                loadingPB.setVisibility(View.GONE);
-                courseRVModalArrayList.add(snapshot.getValue(CourseRVModal.class));
-                courseRVAdapter.notifyDataSetChanged();
-            }
+        //courseRVModalArrayList = CourseDAO.getInstance().getAllByUserID(mAuth.getUid());
 
+        Query query = databaseReference.orderByChild("userID").equalTo(currentUser.getUid());
+        query.addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
-            public void onChildChanged(@NonNull DataSnapshot snapshot, @Nullable String previousChildName) {
+            public void onDataChange(@NonNull DataSnapshot snapshot) {
                 loadingPB.setVisibility(View.GONE);
-                courseRVAdapter.notifyDataSetChanged();
-            }
-
-            @Override
-            public void onChildRemoved(@NonNull DataSnapshot snapshot) {
-                loadingPB.setVisibility(View.GONE);
-                courseRVAdapter.notifyDataSetChanged();
-            }
-
-            @Override
-            public void onChildMoved(@NonNull DataSnapshot snapshot, @Nullable String previousChildName) {
-                loadingPB.setVisibility(View.GONE);
+//                courseRVModalArrayList.add(snapshot.getValue(CourseRVModal.class));
+                for (DataSnapshot ds : snapshot.getChildren()) {
+                    courseRVModalArrayList.add(new CourseRVModal(
+                            ds.child("userID").getValue(String.class),
+                            ds.child("courseName").getValue(String.class),
+                            ds.child("courseDescription").getValue(String.class),
+                            ds.child("CourseSlot").getValue(String.class),
+                            ds.child("semester").getValue(String.class),
+                            ds.child("courseImg").getValue(String.class),
+                            ds.child("courseLink").getValue(String.class),
+                            ds.child("courseID").getValue(String.class)
+                    ));
+                }
                 courseRVAdapter.notifyDataSetChanged();
             }
 
             @Override
             public void onCancelled(@NonNull DatabaseError error) {
-
+                Toast.makeText(MainActivity.this, "cancelled..", Toast.LENGTH_SHORT).show();
             }
+
         });
+
+
     }
 
     @Override
@@ -141,6 +148,7 @@ public class MainActivity extends AppCompatActivity implements CourseRVAdapter.C
                 Intent i = new Intent(MainActivity.this, EditCourseActivity.class);
                 i.putExtra("course", courseRVModal);
                 startActivity(i);
+//                finish();
             }
         });
 
@@ -150,6 +158,7 @@ public class MainActivity extends AppCompatActivity implements CourseRVAdapter.C
                 Intent i = new Intent(Intent.ACTION_VIEW);
                 i.setData(Uri.parse(courseRVModal.getCourseLink()));
                 startActivity(i);
+//                finish();
             }
         });
     }
@@ -167,7 +176,7 @@ public class MainActivity extends AppCompatActivity implements CourseRVAdapter.C
             case R.id.idLogOut:
                 Toast.makeText(this, "User Logout...", Toast.LENGTH_SHORT).show();
                 mAuth.signOut();
-                startActivity(new Intent(MainActivity.this,LoginActivity.class));
+                startActivity(new Intent(MainActivity.this, LoginActivity.class));
                 this.finish();
                 return true;
             default:

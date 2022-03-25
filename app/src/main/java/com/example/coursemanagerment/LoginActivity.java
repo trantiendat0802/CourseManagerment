@@ -3,7 +3,9 @@ package com.example.coursemanagerment;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 
+import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.text.TextUtils;
 import android.util.Log;
@@ -59,39 +61,27 @@ public class LoginActivity extends AppCompatActivity {
                     return;
                 } else {
 
-                    mAuth.signInWithEmailAndPassword(username.toString(), pwd.toString())
-                            .addOnCompleteListener(LoginActivity.this, new OnCompleteListener<AuthResult>() {
-                                        @Override
-                                        public void onComplete(@NonNull Task<AuthResult> task) {
-                                            if (task.isSuccessful()) {
-                                                loadingPB.setVisibility(view.GONE);
-                                                Toast.makeText(LoginActivity.this, "Login successful..", Toast.LENGTH_SHORT);
+                    mAuth.signInWithEmailAndPassword(username.toString(), pwd.toString()).addOnCompleteListener(LoginActivity.this, new OnCompleteListener<AuthResult>() {
+                        @Override
+                        public void onComplete(@NonNull Task<AuthResult> task) {
+                            if (task.isSuccessful()) {
+                                loadingPB.setVisibility(view.GONE);
+                                Toast.makeText(LoginActivity.this, "Login successful..", Toast.LENGTH_SHORT);
 
-                                                Intent i = new Intent(LoginActivity.this,MainActivity.class);
-                                                startActivity(i);
-                                                finish();
-                                            }else {
-                                                loadingPB.setVisibility(View.GONE);
-                                                Toast.makeText(LoginActivity.this, "Login fail..", Toast.LENGTH_SHORT);
-                                            }
-                                        }
-                                    });
-//                    mAuth.signInWithEmailAndPassword(username, pwd).addOnCompleteListener(new OnCompleteListener<AuthResult>() {
-//                        @Override
-//                        public void onComplete(@NonNull Task<AuthResult> task) {
-//                            if (task.isSuccessful()) {
-//                                loadingPB.setVisibility(view.GONE);
-//                                Toast.makeText(LoginActivity.this, "Login successful..", Toast.LENGTH_SHORT);
-//
-//                                Intent i = new Intent(LoginActivity.this,MainActivity.class);
-//                                startActivity(i);
-//                                finish();
-//                            }else {
-//                                loadingPB.setVisibility(View.GONE);
-//                                Toast.makeText(LoginActivity.this, "Login fail..", Toast.LENGTH_SHORT);
-//                            }
-//                        }
-//                    });
+//                                SharedPreferences sharedPref = LoginActivity.this.getPreferences(Context.MODE_PRIVATE);
+//                                SharedPreferences.Editor editor = sharedPref.edit();
+//                                editor.putString("userID",mAuth.getCurrentUser().getUid());
+//                                editor.apply();
+
+                                Intent i = new Intent(LoginActivity.this, MainActivity.class);
+                                startActivity(i);
+                                finish();
+                            } else {
+                                loadingPB.setVisibility(View.GONE);
+                                Toast.makeText(LoginActivity.this, "Login fail..", Toast.LENGTH_SHORT);
+                            }
+                        }
+                    });
                 }
             }
         });

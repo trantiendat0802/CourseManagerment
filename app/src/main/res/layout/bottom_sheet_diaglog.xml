@@ -45,7 +45,7 @@
         android:layout_margin="4dp"
         android:layout_toRightOf="@id/idIVCourse"
         android:padding="3dp"
-        android:text="Suited For"
+        android:text="Semester"
         android:textColor="@color/white" />
 
     <TextView
@@ -56,7 +56,7 @@
         android:layout_margin="4dp"
         android:layout_toRightOf="@id/idIVCourse"
         android:padding="3dp"
-        android:text="Price"
+        android:text="slot"
         android:textSize="18sp"
         android:textStyle="bold"
         android:textColor="@color/white" />
@@ -84,7 +84,7 @@
             android:layout_height="wrap_content"
             android:layout_margin="4dp"
             android:layout_weight="1"
-            android:text="View Details"
+            android:text="Join Class"
             android:textAllCaps="false"
             android:textColor="@color/white" />
 
